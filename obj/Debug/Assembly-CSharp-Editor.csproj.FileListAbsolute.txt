@@ -1,0 +1,1 @@
+C:\UNS Model Editor\obj\Debug\Assembly-CSharp-Editor.csprojAssemblyReference.cache
