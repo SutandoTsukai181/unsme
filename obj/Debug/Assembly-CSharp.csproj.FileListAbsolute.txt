@@ -472,3 +472,6 @@ C:\UNS Model Editor\Temp\bin\Debug\System.Drawing.dll
 C:\UNS Model Editor\Temp\bin\Debug\System.Windows.Forms.dll
 C:\UNS Model Editor\obj\Debug\Assembly-CSharp.csprojAssemblyReference.cache
 C:\UNS Model Editor\Temp\bin\Debug\Ookii.Dialogs.dll
+C:\Users\Mohamed\Documents\GitHub\unsme\obj\Debug\Assembly-CSharp.csprojAssemblyReference.cache
+C:\Users\Mohamed\Documents\GitHub\unsme\obj\Debug\Assembly-CSharp.dll
+C:\Users\Mohamed\Documents\GitHub\unsme\obj\Debug\Assembly-CSharp.pdb

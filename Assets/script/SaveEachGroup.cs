@@ -61,8 +61,8 @@ public class SaveEachGroup : MonoBehaviour {
 			List<int> meshTriangles = new List<int>();
 			List<Vector3> meshNormals = rf.meshNormals;
 			List<Vector2> meshUVs = rf.mf.mesh.uv.ToList();
-			List<Vector3> vertexWeight = rf.vertexWeight.ToList();
-			List<Vector3> vertexBone = rf.vertexBone.ToList();
+			List<Vector4> vertexWeight = rf.vertexWeight.ToList();
+			List<Vector4> vertexBone = rf.vertexBone.ToList();
 
 			int VertexCount = 0;
 			GroupSelection gp = GetComponent<GroupSelection>();

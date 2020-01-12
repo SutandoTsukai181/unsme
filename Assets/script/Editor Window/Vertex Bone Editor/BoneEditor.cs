@@ -17,8 +17,10 @@ public class BoneEditor : MonoBehaviour {
 	public InputField Weight0Input;
 	public InputField Weight1Input;
 	public InputField Weight2Input;
+    public InputField Weight3Input;
 
-	void Start () {
+    void Start () 
+    {
 		List<string> BoneListCmn = new List<string>();
 
 		if(GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().CustomBones.Count > 0)
@@ -81,7 +83,15 @@ public class BoneEditor : MonoBehaviour {
 		}
 	}
 
-	public void SaveWeight0()
+    public void SaveBone3()
+    {
+        foreach (GameObject vertexSelected in GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().selectedVertex)
+        {
+            GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().ChangeBoneID(int.Parse(vertexSelected.name), 3, BoneInput[3].value + 1);
+        }
+    }
+
+    public void SaveWeight0()
 	{
 		if(Weight0Input.text != "")
 		{
@@ -126,13 +136,30 @@ public class BoneEditor : MonoBehaviour {
 		}
 	}
 
-	public void CloseWindow()
+    public void SaveWeight3()
+    {
+        if (Weight2Input.text != "")
+        {
+            foreach (GameObject vertexSelected in GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().selectedVertex)
+            {
+                GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().ChangeWeight(int.Parse(vertexSelected.name), 3, float.Parse(Weight3Input.text));
+            }
+        }
+        else
+        {
+            MessageBox.Show("Cannot parse weight.");
+        }
+    }
+
+    public void CloseWindow()
 	{
 		BoneInput[0].value = 0;
 		BoneInput[1].value = 0;
 		BoneInput[2].value = 0;
-		Weight0Input.text = "";
+        BoneInput[3].value = 0;
+        Weight0Input.text = "";
 		Weight1Input.text = "";
 		Weight2Input.text = "";
-	}
+        Weight3Input.text = "";
+    }
 }

@@ -514,9 +514,9 @@ public class ConsoleCommandBehaviour : MonoBehaviour {
 		DialogResult dial = DialogResult.OK;
 		for(int x = 0; x < GameObject.Find("Model Data").transform.childCount; x++)
 		{
-			if(R.vertexBone[x] == Vector3.zero || R.vertexWeight[x] == Vector3.zero)
+			if(R.vertexBone[x] == Vector4.zero || R.vertexWeight[x] == Vector4.zero)
 			{
-				dial = MessageBox.Show("Vertex " + x.ToString() + ", B(0, 0, 0), W(0, 0, 0).", "Bone information", MessageBoxButtons.OKCancel);
+				dial = MessageBox.Show("Vertex " + x.ToString() + ", B(0, 0, 0, 0), W(0, 0, 0, 0).", "Bone information", MessageBoxButtons.OKCancel);
 			}
 			if(dial == DialogResult.Cancel)
 			{
@@ -822,8 +822,7 @@ public class ConsoleCommandBehaviour : MonoBehaviour {
 
 			if(res == DialogResult.Yes)
 			{
-                //R.ImportModel(openFileDialog1.FileName);
-                R.ImportModelRE2(openFileDialog1.FileName);
+                R.ImportModel(openFileDialog1.FileName);
 				R.wasObjImported = true;
 			}
 		}

@@ -60,9 +60,9 @@ public class RenderFile : MonoBehaviour {
 	[HideInInspector]
 	public List<Vector2> TextureUVs = new List<Vector2>();
 	[HideInInspector]
-	public List<Vector3> vertexBone = new List<Vector3>();
+	public List<Vector4> vertexBone = new List<Vector4>();
 	[HideInInspector]
-	public List<Vector3> vertexWeight = new List<Vector3>();
+	public List<Vector4> vertexWeight = new List<Vector4>();
 
 	[HideInInspector]
 	public string PathToModel;
@@ -264,20 +264,15 @@ public class RenderFile : MonoBehaviour {
 							fileBytes[16 + vertexOffset + 11 + (x * byteLength)]), 0);
 						meshNormals.Add(new Vector3(normalFloatX, normalFloatY, normalFloatZ));
 
-						vertexBone.Add(new Vector3((float)fileBytes[35 + vertexOffset + (x * byteLength)], (float)fileBytes[39 + vertexOffset + (x * byteLength)], (float)fileBytes[43 + vertexOffset + (x * byteLength)]));
+						vertexBone.Add(new Vector4((float)fileBytes[35 + vertexOffset + (x * byteLength)], (float)fileBytes[39 + vertexOffset + (x * byteLength)], (float)fileBytes[43 + vertexOffset + (x * byteLength)], (float)fileBytes[47 + vertexOffset + (x * byteLength)]));
 
 						float weightFloatX = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[48 + vertexOffset + 0 + (x * byteLength)] * 0x1000000 + fileBytes[48 + vertexOffset + 1 + (x * byteLength)] * 0x10000 + fileBytes[48 + vertexOffset + 2 + (x * byteLength)] * 0x100 + fileBytes[48 + vertexOffset + 3 + (x * byteLength)]), 0);
 						float weightFloatY = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[48 + vertexOffset + 4 + (x * byteLength)] * 0x1000000 + fileBytes[48 + vertexOffset + 5 + (x * byteLength)] * 0x10000 + fileBytes[48 + vertexOffset + 6 + (x * byteLength)] * 0x100 + fileBytes[48 + vertexOffset + 7 + (x * byteLength)]), 0);
 						float weightFloatZ = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[48 + vertexOffset + 8 + (x * byteLength)] * 0x1000000 + fileBytes[48 + vertexOffset + 9 + (x * byteLength)] * 0x10000 + fileBytes[48 + vertexOffset + 10 + (x * byteLength)] * 0x100 + fileBytes[48 + vertexOffset + 11 + (x * byteLength)]), 0);
+                        float weightFloatW = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[48 + vertexOffset + 12 + (x * byteLength)] * 0x1000000 + fileBytes[48 + vertexOffset + 13 + (x * byteLength)] * 0x10000 + fileBytes[48 + vertexOffset + 14 + (x * byteLength)] * 0x100 + fileBytes[48 + vertexOffset + 15 + (x * byteLength)]), 0);
 
-						if(WeightMode == 0) vertexWeight.Add(new Vector3(weightFloatX, weightFloatY, weightFloatZ));
-						if(WeightMode == 1) vertexWeight.Add(new Vector3(weightFloatX, weightFloatZ, weightFloatY));
-
-						/*float Unknown =
-							toFloat(fileBytes[32 + vertexOffset + (x * byteLength)] * 0x100 +
-							fileBytes[33 + vertexOffset + (x * byteLength)]);
-
-						UnknownValue.Add(Unknown);*/
+                        if (WeightMode == 0) vertexWeight.Add(new Vector4(weightFloatX, weightFloatY, weightFloatZ, weightFloatW));
+						if(WeightMode == 1) vertexWeight.Add(new Vector4(weightFloatX, weightFloatZ, weightFloatY, weightFloatW));
 					}
 					else if(byteLength == 0x1C)
 					{
@@ -1149,9 +1144,10 @@ public class RenderFile : MonoBehaviour {
 						vertexFileNew[0x23 + (byteLength * x)] = (byte)vertexBone[x].x;
 						vertexFileNew[0x27 + (byteLength * x)] = (byte)vertexBone[x].y;
 						vertexFileNew[0x2B + (byteLength * x)] = (byte)vertexBone[x].z;
+                        vertexFileNew[0x2F + (byteLength * x)] = (byte)vertexBone[x].w;
 
-						// WEIGHT DATA
-						byte[] weightx = BitConverter.GetBytes(vertexWeight[x].x).ToArray();
+                        // WEIGHT DATA
+                        byte[] weightx = BitConverter.GetBytes(vertexWeight[x].x).ToArray();
                         if (WeightMode == 1) weightx = BitConverter.GetBytes(vertexWeight[x].x).ToArray();
                         Array.Reverse(weightx);
 
@@ -1163,7 +1159,11 @@ public class RenderFile : MonoBehaviour {
 						if(WeightMode == 1) weightz = BitConverter.GetBytes(vertexWeight[x].y).ToArray();
 						Array.Reverse(weightz);
 
-						vertexFileNew[0x30 + (byteLength * x)] = weightx[0];
+                        byte[] weightw = BitConverter.GetBytes(vertexWeight[x].w).ToArray();
+                        if (WeightMode == 1) weightw = BitConverter.GetBytes(vertexWeight[x].w).ToArray();
+                        Array.Reverse(weightw);
+
+                        vertexFileNew[0x30 + (byteLength * x)] = weightx[0];
 						vertexFileNew[0x31 + (byteLength * x)] = weightx[1];
 						vertexFileNew[0x32 + (byteLength * x)] = weightx[2];
 						vertexFileNew[0x33 + (byteLength * x)] = weightx[3];
@@ -1178,8 +1178,13 @@ public class RenderFile : MonoBehaviour {
 						vertexFileNew[0x3A + (byteLength * x)] = weightz[2];
 						vertexFileNew[0x3B + (byteLength * x)] = weightz[3];
 
-						// NORMALS
-						byte[] normalx = BitConverter.GetBytes(meshNormals[x].x).ToArray();
+                        vertexFileNew[0x3C + (byteLength * x)] = weightw[0];
+                        vertexFileNew[0x3D + (byteLength * x)] = weightw[1];
+                        vertexFileNew[0x3E + (byteLength * x)] = weightw[2];
+                        vertexFileNew[0x3F + (byteLength * x)] = weightw[3];
+
+                        // NORMALS
+                        byte[] normalx = BitConverter.GetBytes(meshNormals[x].x).ToArray();
 						Array.Reverse(normalx);
 
 						vertexFileNew[0x10 + (byteLength * x)] = normalx[0];
@@ -1991,14 +1996,14 @@ public class RenderFile : MonoBehaviour {
 				vertexWeight.Add(BoneWeightObj[x]);
 			}
 
-			if(VertexCount > vertexBone.Count && byteLength == 0x40)
+			if(VertexCount > vertexBone.Count && (byteLength == 0x40 || byteLength == 0x60))
 			{
 				MessageBox.Show("Some vertices were filled with bones of ID 0.");
 				int boneC = vertexBone.Count;
 				for(int x = boneC; x < VertexCount; x++)
 				{
-					vertexBone.Add(new Vector3(0, 0, 0));
-					vertexWeight.Add(new Vector3(0, 0, 0));
+					vertexBone.Add(new Vector4(0, 0, 0, 0));
+					vertexWeight.Add(new Vector4(0, 0, 0, 0));
 				}
 			}
 
@@ -2143,11 +2148,11 @@ public class RenderFile : MonoBehaviour {
 
 			string[] boneLines = new string[0];
 
-			if(byteLength == 0x40)
+			if(byteLength == 0x40 || byteLength == 0x60)
 			{
 				dialog = MessageBox.Show("Do you want to load a .bones file? It has to have the same vertex number as the original model.", "Bone importing", MessageBoxButtons.YesNo);
 			}
-
+            
 			string fileP = "";
 			if(dialog == DialogResult.Yes)
 			{
@@ -2166,8 +2171,8 @@ public class RenderFile : MonoBehaviour {
 
 			bool importBones = false;
 
-			List<Vector3> BoneIndexObj = new List<Vector3>();
-			List<Vector3> BoneWeightObj = new List<Vector3>();
+			List<Vector4> BoneIndexObj = new List<Vector4>();
+			List<Vector4> BoneWeightObj = new List<Vector4>();
 
 			if(fileP != "")
 			{
@@ -2185,8 +2190,8 @@ public class RenderFile : MonoBehaviour {
 					weights_[1] = float.Parse((boneLines[(6 * h) + 4]));
 					weights_[2] = float.Parse((boneLines[(6 * h) + 5]));
 
-					BoneIndexObj.Add(new Vector3(bones_[0], bones_[1], bones_[2]));
-					BoneWeightObj.Add(new Vector3(weights_[0], weights_[1], weights_[2]));
+					BoneIndexObj.Add(new Vector4(bones_[0], bones_[1], bones_[2], 0));
+					BoneWeightObj.Add(new Vector4(weights_[0], weights_[1], weights_[2], 0));
 				}
 
 				vertexBone = BoneIndexObj;
@@ -2200,8 +2205,8 @@ public class RenderFile : MonoBehaviour {
 				{
 					for(int x = 0; x < vertexBone.Count; x++)
 					{
-						BoneIndexObj.Add(new Vector3(1, 1, 1));
-						BoneWeightObj.Add(new Vector3(1, 0, 0));
+						BoneIndexObj.Add(new Vector4(1, 1, 1, 0));
+						BoneWeightObj.Add(new Vector4(1, 0, 0, 0));
 					}
 				}
 			}
@@ -2373,7 +2378,7 @@ public class RenderFile : MonoBehaviour {
                                 triVertID[a] = VertexCount;
                                 meshVertices.Add(VerticesInObj[vertexIndex[a]]);
 
-                                if (byteLength == 0x40 && importBones && BoneIndexObj.Count > vertexIndex[a])
+                                if ((byteLength == 0x40 || byteLength == 0x60) && importBones && BoneIndexObj.Count > vertexIndex[a])
                                 {
                                     vertexBone.Add(BoneIndexObj[vertexIndex[a]]);
                                     vertexWeight.Add(BoneWeightObj[vertexIndex[a]]);
@@ -2420,10 +2425,10 @@ public class RenderFile : MonoBehaviour {
 				GameObject actualObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
 				meshVertices.Add(new Vector3(0, 0, 0));
 
-				if(byteLength == 0x40)
+				if(byteLength == 0x40 || byteLength == 0x60)
 				{
-					vertexBone.Add(new Vector3(0, 0, 0));
-					vertexWeight.Add(new Vector3(0, 0, 0));
+					vertexBone.Add(new Vector4(0, 0, 0, 0));
+					vertexWeight.Add(new Vector4(0, 0, 0, 0));
 				}
 
 				actualObject.AddComponent<VertexObject>();
@@ -2446,14 +2451,14 @@ public class RenderFile : MonoBehaviour {
 
 			vertexPosition = meshVertices;
 
-			if(VertexCount > vertexBone.Count && byteLength == 0x40)
+			if(VertexCount > vertexBone.Count && (byteLength == 0x40 || byteLength == 0x60))
 			{
 				MessageBox.Show("Some vertices were filled with bones of ID 0.");
 				int boneC = vertexBone.Count;
 				for(int x = boneC; x < VertexCount; x++)
 				{
-					vertexBone.Add(new Vector3(0, 0, 0));
-					vertexWeight.Add(new Vector3(0, 0, 0));
+					vertexBone.Add(new Vector4(0, 0, 0, 0));
+					vertexWeight.Add(new Vector4(0, 0, 0, 0));
 				}
 			}
 
@@ -2505,40 +2510,48 @@ public class RenderFile : MonoBehaviour {
 	{
 		if(number == 0)
 		{
-			vertexBone[vertex] = new Vector3((float)boneID, vertexBone[vertex].y, vertexBone[vertex].z);
-		}
+            vertexBone[vertex] = new Vector4((float)boneID, vertexBone[vertex].y, vertexBone[vertex].z, vertexBone[vertex].w);
+        }
 		else if(number == 1)
 		{
-			vertexBone[vertex] = new Vector3(vertexBone[vertex].x, (float)boneID, vertexBone[vertex].z);
+			vertexBone[vertex] = new Vector4(vertexBone[vertex].x, (float)boneID, vertexBone[vertex].z, vertexBone[vertex].w);
 		}
 		else if(number == 2)
 		{
-			vertexBone[vertex] = new Vector3(vertexBone[vertex].x, vertexBone[vertex].y, (float)boneID);
+			vertexBone[vertex] = new Vector4(vertexBone[vertex].x, vertexBone[vertex].y, (float)boneID, vertexBone[vertex].w);
 		}
-	}
+        else if (number == 3)
+        {
+            vertexBone[vertex] = new Vector4(vertexBone[vertex].x, vertexBone[vertex].y, vertexBone[vertex].z, (float)boneID);
+        }
+    }
 
 	public void ChangeWeight(int vertex, int number, float weight)
 	{
 		if(number == 0)
 		{
-			vertexWeight[vertex] = new Vector3(weight, vertexWeight[vertex].y, vertexWeight[vertex].z);
+			vertexWeight[vertex] = new Vector4(weight, vertexWeight[vertex].y, vertexWeight[vertex].z, vertexWeight[vertex].w);
 		}
 		else if(number == 1)
 		{
-			vertexWeight[vertex] = new Vector3(vertexWeight[vertex].x, weight, vertexWeight[vertex].z);
+			vertexWeight[vertex] = new Vector4(vertexWeight[vertex].x, weight, vertexWeight[vertex].z, vertexWeight[vertex].w);
 		}
 		else if(number == 2)
 		{
-			vertexWeight[vertex] = new Vector3(vertexWeight[vertex].x, vertexWeight[vertex].y, weight);
+			vertexWeight[vertex] = new Vector4(vertexWeight[vertex].x, vertexWeight[vertex].y, weight, vertexWeight[vertex].w);
 		}
-	}
+        else if (number == 3)
+        {
+            vertexWeight[vertex] = new Vector4(vertexWeight[vertex].x, vertexWeight[vertex].y, vertexWeight[vertex].z, weight);
+        }
+    }
 
-	public Vector3 GetBonesOfVertex(int vertex)
+	public Vector4 GetBonesOfVertex(int vertex)
 	{
 		return vertexBone[vertex];
 	}
 
-	public Vector3 GetWeightsOfVertex(int vertex)
+	public Vector4 GetWeightsOfVertex(int vertex)
 	{
 		return vertexWeight[vertex];
 	}
@@ -2780,7 +2793,7 @@ public class RenderFile : MonoBehaviour {
 		}
 		objModelLines.Add("# " + (mf.mesh.triangles.Length / 3).ToString() + " triangles");
 
-		if(byteLength == 64)
+		if(byteLength == 64 || byteLength == 96)
 		{
 			List<string> boneFile = new List<string>();
 
@@ -2789,10 +2802,12 @@ public class RenderFile : MonoBehaviour {
 				boneFile.Add(vertexBone[w].x.ToString());
 				boneFile.Add(vertexBone[w].y.ToString());
 				boneFile.Add(vertexBone[w].z.ToString());
-				boneFile.Add(vertexWeight[w].x.ToString());
+                boneFile.Add(vertexBone[w].w.ToString());
+                boneFile.Add(vertexWeight[w].x.ToString());
 				boneFile.Add(vertexWeight[w].y.ToString());
 				boneFile.Add(vertexWeight[w].z.ToString());
-			}
+                boneFile.Add(vertexWeight[w].w.ToString());
+            }
 
 			try
 			{
@@ -2972,9 +2987,10 @@ public class RenderFile : MonoBehaviour {
 				vertexFileNew[35 + (byteLength * x)] = (byte)vertexBone[x].x;
 				vertexFileNew[39 + (byteLength * x)] = (byte)vertexBone[x].y;
 				vertexFileNew[43 + (byteLength * x)] = (byte)vertexBone[x].z;
+                vertexFileNew[47 + (byteLength * x)] = (byte)vertexBone[x].w;
 
-				// NORMALS
-				byte[] normalx = BitConverter.GetBytes(mf.mesh.normals[x].x).ToArray();
+                // NORMALS
+                byte[] normalx = BitConverter.GetBytes(mf.mesh.normals[x].x).ToArray();
 				Array.Reverse(normalx);
 
 				vertexFileNew[16 + (byteLength * x)] = normalx[0];
@@ -3233,13 +3249,14 @@ public class RenderFile : MonoBehaviour {
 					float normalFloatY = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[16 + vertexOffset + 8 + (x * byteLength)] * 0x1000000 + fileBytes[16 + vertexOffset + 9 + (x * byteLength)] * 0x10000 + fileBytes[16 + vertexOffset + 10 + (x * byteLength)] * 0x100 + fileBytes[16 + vertexOffset + 11 + (x * byteLength)]), 0);
 					meshNormals.Add(new Vector3(normalFloatX, normalFloatY, normalFloatZ));
 
-					vertexBone.Add(new Vector3((float)fileBytes[35 + vertexOffset + (x * byteLength)], (float)fileBytes[39 + vertexOffset + (x * byteLength)], (float)fileBytes[43 + vertexOffset + (x * byteLength)]));
+					vertexBone.Add(new Vector4((float)fileBytes[35 + vertexOffset + (x * byteLength)], (float)fileBytes[39 + vertexOffset + (x * byteLength)], (float)fileBytes[43 + vertexOffset + (x * byteLength)], (float)fileBytes[47 + vertexOffset + (x * byteLength)]));
 
 					float weightFloatX = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[48 + vertexOffset + 0 + (x * byteLength)] * 0x1000000 + fileBytes[48 + vertexOffset + 1 + (x * byteLength)] * 0x10000 + fileBytes[48 + vertexOffset + 2 + (x * byteLength)] * 0x100 + fileBytes[48 + vertexOffset + 3 + (x * byteLength)]), 0);
 					float weightFloatZ = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[48 + vertexOffset + 4 + (x * byteLength)] * 0x1000000 + fileBytes[48 + vertexOffset + 5 + (x * byteLength)] * 0x10000 + fileBytes[48 + vertexOffset + 6 + (x * byteLength)] * 0x100 + fileBytes[48 + vertexOffset + 7 + (x * byteLength)]), 0);
 					float weightFloatY = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[48 + vertexOffset + 8 + (x * byteLength)] * 0x1000000 + fileBytes[48 + vertexOffset + 9 + (x * byteLength)] * 0x10000 + fileBytes[48 + vertexOffset + 10 + (x * byteLength)] * 0x100 + fileBytes[48 + vertexOffset + 11 + (x * byteLength)]), 0);
+                    float weightFloatW = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[48 + vertexOffset + 12 + (x * byteLength)] * 0x1000000 + fileBytes[48 + vertexOffset + 13 + (x * byteLength)] * 0x10000 + fileBytes[48 + vertexOffset + 14 + (x * byteLength)] * 0x100 + fileBytes[48 + vertexOffset + 15 + (x * byteLength)]), 0);
 
-					vertexWeight.Add(new Vector3(weightFloatX, weightFloatY, weightFloatZ));
+                    vertexWeight.Add(new Vector4(weightFloatX, weightFloatY, weightFloatZ, weightFloatW));
 				}
 				else if(byteLength == 0x1C)
 				{
@@ -3446,1002 +3463,6 @@ public class RenderFile : MonoBehaviour {
 		}
     }
 
-    public void ImportModelRE2(string importPath)
-    {
-        try
-        {
-            string[] objModelLines = File.ReadAllLines(importPath);
-            GroupSelection g = GetComponent<GroupSelection>();
-            g.GroupNames.Clear();
-            g.Groups.Clear();
-            g.TrianglesPerGroup.Clear();
-
-            TextureUVs.Clear();
-
-            selectedVertex.Clear();
-            meshVertices.Clear();
-            vertexPosition.Clear();
-            meshNormals.Clear();
-            meshTriangles.Clear();
-
-            List<List<int>> groupsInObj = new List<List<int>>();
-
-            // Clear mesh data
-            mf.mesh.Clear();
-
-            // Destroy all vertex gameobjects in the world
-            for (int x = 0; x < VertexCount; x++)
-            {
-                int indexinlist = vertexPosition.IndexOf(GameObject.Find(x.ToString()).transform.position);
-                Destroy(GameObject.Find(x.ToString()));
-            }
-
-            // Set vertexcount to 0
-            VertexCount = 0;
-
-            List<Vector3> VerticesInObj = new List<Vector3>();
-            List<Vector3> NormalsInObj = new List<Vector3>();
-            List<Vector2> TextureInObj = new List<Vector2>();
-
-            DialogResult dialog = DialogResult.No;
-
-            string[] boneLines = new string[0];
-
-            if (byteLength == 0x40)
-            {
-                dialog = MessageBox.Show("Do you want to load a .bones file? It has to have the same vertex number as the original model.", "Bone importing", MessageBoxButtons.YesNo);
-            }
-
-            string fileP = "";
-            if (dialog == DialogResult.Yes)
-            {
-                vertexBone.Clear();
-                vertexWeight.Clear();
-
-                VistaOpenFileDialog openf = new VistaOpenFileDialog();
-                openf.ShowDialog();
-
-                if (openf.FileName != "" && File.Exists(openf.FileName))
-                {
-                    fileP = openf.FileName;
-                    boneLines = File.ReadAllLines(fileP);
-                }
-            }
-
-            bool importBones = false;
-
-            List<Vector3> BoneIndexObj = new List<Vector3>();
-            List<Vector3> BoneWeightObj = new List<Vector3>();
-
-            if (fileP != "")
-            {
-                boneLines = File.ReadAllLines(fileP);
-                importBones = true;
-                for (int h = 0; h < boneLines.ToList().Count / 6; h++)
-                {
-                    int[] bones_ = new int[3];
-                    bones_[0] = int.Parse((boneLines[(6 * h) + 0]));
-                    bones_[1] = int.Parse((boneLines[(6 * h) + 1]));
-                    bones_[2] = int.Parse((boneLines[(6 * h) + 2]));
-
-                    float[] weights_ = new float[3];
-                    weights_[0] = float.Parse((boneLines[(6 * h) + 3]));
-                    weights_[1] = float.Parse((boneLines[(6 * h) + 4]));
-                    weights_[2] = float.Parse((boneLines[(6 * h) + 5]));
-
-                    BoneIndexObj.Add(new Vector3(bones_[0], bones_[1], bones_[2]));
-                    BoneWeightObj.Add(new Vector3(weights_[0], weights_[1], weights_[2]));
-                }
-
-                vertexBone = BoneIndexObj;
-                vertexWeight = BoneWeightObj;
-            }
-            else
-            {
-                dialog = MessageBox.Show("Do you want to fill all the bones with 0s?", "Bone importing", MessageBoxButtons.YesNo);
-
-                if (dialog == DialogResult.Yes)
-                {
-                    for (int x = 0; x < vertexBone.Count; x++)
-                    {
-                        BoneIndexObj.Add(new Vector3(0, 0, 0));
-                        BoneWeightObj.Add(new Vector3(0, 0, 0));
-                    }
-                }
-            }
-
-            List<List<Vector2>> VerticesUVIndex = new List<List<Vector2>>();
-
-            // Read vert position and save it to a variable
-            for (int x = 0; x < objModelLines.Length; x++)
-            {
-                string line_ = objModelLines[x];
-                if (line_.Length > 2)
-                {
-                    if (line_[0] == 'v' && line_[1] == ' ')
-                    {
-                        int a = 0;
-                        int a1 = 0;
-                        int b = 0;
-                        int c = 0;
-
-                        char[] xT = new char[25];
-                        char[] yT = new char[25];
-                        char[] zT = new char[25];
-
-                        char[] line;
-                        line = line_.ToCharArray();
-
-                        a = 2;
-                        while (line_[a] == ' ')
-                        {
-                            a++;
-                        }
-
-                        while (line[a].ToString() != " ")
-                        {
-                            xT[a1] = line[a];
-                            a1++;
-                            a++;
-                        }
-
-                        a++;
-                        while (line[a].ToString() != " ")
-                        {
-                            yT[b] = line[a];
-                            b++;
-                            a++;
-                        }
-
-                        a++;
-                        while (a < line.Length && line[a].ToString() != " ")
-                        {
-                            zT[c] = line[a];
-                            c++;
-                            a++;
-                        }
-
-                        float X_;
-                        float Y_;
-                        float Z_;
-
-                        X_ = float.Parse(new string(xT));
-                        Y_ = float.Parse(new string(yT));
-                        Z_ = -1 * float.Parse(new string(zT));
-
-                        VerticesInObj.Add(new Vector3(X_, Y_, Z_));
-                        VerticesUVIndex.Add(new List<Vector2>());
-                    }
-                    else if (line_[0] == 'v' && line_[1] == 't' && line_[2] == ' ')
-                    {
-                        int a = 0;
-                        int a1 = 0;
-                        int b = 0;
-
-                        char[] xT = new char[50];
-                        char[] yT = new char[50];
-
-                        char[] line = new char[100];
-                        line = line_.ToCharArray();
-
-                        a = 3;
-                        while (line_[a] == ' ')
-                        {
-                            a++;
-                        }
-
-                        while (line[a].ToString() != " ")
-                        {
-                            xT[a1] = line[a];
-                            a1++;
-                            a++;
-                        }
-
-                        a++;
-                        while (a < line.Length && line[a].ToString() != " ")
-                        {
-                            yT[b] = line[a];
-                            b++;
-                            a++;
-                        }
-
-                        float X_;
-                        float Y_;
-
-                        X_ = float.Parse(new string(xT));
-                        Y_ = float.Parse(new string(yT));
-
-                        TextureInObj.Add(new Vector2(X_, Y_));
-                    }
-                    else if (line_[0] == 'v' && line_[1] == 'n' && line_[2] == ' ')
-                    {
-                        int a = 0;
-                        int a1 = 0;
-                        int b = 0;
-                        int c = 0;
-
-                        char[] xT = new char[50];
-                        char[] yT = new char[50];
-                        char[] zT = new char[50];
-
-                        char[] line = new char[100];
-                        line = line_.ToCharArray();
-
-                        a = 3;
-                        while (line_[a] == ' ')
-                        {
-                            a++;
-                        }
-
-                        while (line[a].ToString() != " ")
-                        {
-                            xT[a1] = line[a];
-                            a1++;
-                            a++;
-                        }
-
-                        a++;
-                        while (line[a].ToString() != " ")
-                        {
-                            yT[b] = line[a];
-                            b++;
-                            a++;
-                        }
-
-                        a++;
-                        while (a < line.Length && line[a].ToString() != " ")
-                        {
-                            zT[c] = line[a];
-                            c++;
-                            a++;
-                        }
-
-                        float X_;
-                        float Y_;
-                        float Z_;
-
-                        X_ = float.Parse(new string(xT));
-                        Y_ = float.Parse(new string(yT));
-                        Z_ = float.Parse(new string(zT));
-
-                        NormalsInObj.Add(new Vector3(X_, Y_, Z_));
-                    }
-                }
-            }
-
-            int actualGroup = -1;
-
-            // Look for faces. 3 1 2 creates a new face with new vertices positions (3, 1, 2)
-            for (int x = 0; x < objModelLines.Length; x++)
-            {
-                string line_ = objModelLines[x];
-
-                if (line_.Length > 2)
-                {
-                    if (line_[0] == 'g' && line_[1] == ' ')
-                    {
-                        string gName = line_.Substring(2, line_.Length - 2);
-                        List<string> par = new List<string>() { gName };
-                        GetComponent<ConsoleCommandBehaviour>().Command_CreateGroup(par);
-                        groupsInObj.Add(new List<int>());
-                        actualGroup++;
-                        g.TrianglesPerGroup.Add(0);
-                    }
-
-                    if (line_[0] == 'f' && line_[1] == ' ')
-                    {
-                        g.TrianglesPerGroup[actualGroup] = g.TrianglesPerGroup[actualGroup] + 1;
-                        int numberofslash = 0;
-                        for (int _x = 0; _x < line_.Length; _x++)
-                        {
-                            if (line_[_x] == '/')
-                            {
-                                numberofslash++;
-                            }
-                        }
-
-                        if (numberofslash != 0 && numberofslash != 3 && numberofslash != 6)
-                        {
-                            MessageBox.Show("SN = " + numberofslash.ToString() + ". This error isn't supposed to happen. Report it to Zealot.");
-                        }
-
-                        // If numberofslash is 0, it means that the face is only composed of vertex numbers
-                        if (numberofslash == 0)
-                        {
-                            List<char> charOfVertex1 = new List<char>();
-                            List<char> charOfVertex2 = new List<char>();
-                            List<char> charOfVertex3 = new List<char>();
-
-                            int a = 0;
-                            // Get number of vertex 1
-                            for (int b = a; b < line_.Length; b++)
-                            {
-                                if (Char.IsDigit(line_[b]))
-                                {
-                                    a = b;
-                                    break;
-                                }
-                            }
-                            while (a < line_.Length && Char.IsDigit(line_[a]))
-                            {
-                                charOfVertex1.Add(line_[a]);
-                                a++;
-                            }
-
-                            // Skip space
-                            a++;
-
-                            // Get number of vertex 2
-                            for (int b = a; b < line_.Length; b++)
-                            {
-                                if (Char.IsDigit(line_[b]))
-                                {
-                                    a = b;
-                                    break;
-                                }
-                            }
-                            while (a < line_.Length && Char.IsDigit(line_[a]))
-                            {
-                                charOfVertex2.Add(line_[a]);
-                                a++;
-                            }
-
-                            // Skip space
-                            a++;
-
-                            // Get number of vertex 3
-                            for (int b = a; b < line_.Length; b++)
-                            {
-                                if (Char.IsDigit(line_[b]))
-                                {
-                                    a = b;
-                                    break;
-                                }
-                            }
-                            while (a < line_.Length && Char.IsDigit(line_[a]))
-                            {
-                                charOfVertex3.Add(line_[a]);
-                                a++;
-                            }
-
-                            int[] triVert = new int[3];
-                            int[] triVertID = new int[3];
-
-                            triVert[0] = int.Parse(new String(charOfVertex1.ToArray())) - 1;
-                            triVert[1] = int.Parse(new String(charOfVertex2.ToArray())) - 1;
-                            triVert[2] = int.Parse(new String(charOfVertex3.ToArray())) - 1;
-
-                            bool[] vertExists = new bool[3] { false, false, false };
-                            int[] vertNum = new int[3] { 0, 0, 0 };
-
-                            for (int w = 0; w < 3; w++)
-                            {
-                                if (VerticesUVIndex[triVert[w]].Count == 0)
-                                {
-                                    vertExists[w] = false;
-                                }
-                                else
-                                {
-                                    vertExists[w] = true;
-                                    vertNum[w] = int.Parse(VerticesUVIndex[triVert[w]][0].x.ToString());
-                                }
-                            }
-
-                            for (int q = 0; q < 3; q++)
-                            {
-                                if (vertExists[q] == false)
-                                {
-                                    GameObject actualObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                                    triVertID[q] = VertexCount;
-                                    meshVertices.Add(VerticesInObj[triVert[q]]);
-
-                                    if (byteLength == 0x40 && importBones && BoneIndexObj.Count > triVert[q])
-                                    {
-                                        vertexBone.Add(BoneIndexObj[triVert[q]]);
-                                        vertexWeight.Add(BoneWeightObj[triVert[q]]);
-                                    }
-
-                                    actualObject.AddComponent<VertexObject>();
-                                    actualObject.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-                                    actualObject.transform.position = VerticesInObj[triVert[q]];
-                                    actualObject.transform.SetParent(GameObject.Find("Model Data").transform);
-                                    actualObject.name = VertexCount.ToString();
-                                    actualObject.transform.SetAsLastSibling();
-                                    actualObject.tag = "Vertex";
-                                    actualObject.layer = 9;
-
-                                    VerticesUVIndex[triVert[q]].Add(new Vector2(triVertID[q], 0));
-
-                                    VertexCount++;
-                                }
-                                else
-                                {
-                                    triVertID[q] = vertNum[q];
-                                }
-                            }
-
-                            meshTriangles.Add(triVertID[2]);
-                            meshTriangles.Add(triVertID[1]);
-                            meshTriangles.Add(triVertID[0]);
-
-                            if (groupsInObj.Count != 0) groupsInObj[groupsInObj.Count - 1].Add(triVertID[0]);
-                            if (groupsInObj.Count != 0) groupsInObj[groupsInObj.Count - 1].Add(triVertID[1]);
-                            if (groupsInObj.Count != 0) groupsInObj[groupsInObj.Count - 1].Add(triVertID[2]);
-                        }
-                        else if (numberofslash == 3)
-                        {
-                            List<char> charOfVertex1 = new List<char>();
-                            List<char> charOfTexture1 = new List<char>();
-
-                            List<char> charOfVertex2 = new List<char>();
-                            List<char> charOfTexture2 = new List<char>();
-
-                            List<char> charOfVertex3 = new List<char>();
-                            List<char> charOfTexture3 = new List<char>();
-
-                            int a = 0;
-                            // Get number of vertex 1
-                            for (int b = a; b < line_.Length; b++)
-                            {
-                                if (Char.IsDigit(line_[b]))
-                                {
-                                    a = b;
-                                    break;
-                                }
-                            }
-                            while (a < line_.Length && Char.IsDigit(line_[a]))
-                            {
-                                charOfVertex1.Add(line_[a]);
-                                a++;
-                            }
-
-                            // Skip slash
-                            a++;
-
-                            // Get number of texture 1
-                            for (int b = a; b < line_.Length; b++)
-                            {
-                                if (Char.IsDigit(line_[b]))
-                                {
-                                    a = b;
-                                    break;
-                                }
-                            }
-                            while (a < line_.Length && Char.IsDigit(line_[a]))
-                            {
-                                charOfTexture1.Add(line_[a]);
-                                a++;
-                            }
-
-                            // Skip space
-                            a++;
-
-                            // Get number of vertex 2
-                            for (int b = a; b < line_.Length; b++)
-                            {
-                                if (Char.IsDigit(line_[b]))
-                                {
-                                    a = b;
-                                    break;
-                                }
-                            }
-                            while (a < line_.Length && Char.IsDigit(line_[a]))
-                            {
-                                charOfVertex2.Add(line_[a]);
-                                a++;
-                            }
-
-                            // Skip slash
-                            a++;
-
-                            // Get number of texture 2
-                            for (int b = a; b < line_.Length; b++)
-                            {
-                                if (Char.IsDigit(line_[b]))
-                                {
-                                    a = b;
-                                    break;
-                                }
-                            }
-                            while (a < line_.Length && Char.IsDigit(line_[a]))
-                            {
-                                charOfTexture2.Add(line_[a]);
-                                a++;
-                            }
-
-                            // Skip space
-                            a++;
-
-                            // Get number of vertex 3
-                            for (int b = a; b < line_.Length; b++)
-                            {
-                                if (Char.IsDigit(line_[b]))
-                                {
-                                    a = b;
-                                    break;
-                                }
-                            }
-                            while (a < line_.Length && Char.IsDigit(line_[a]))
-                            {
-                                charOfVertex3.Add(line_[a]);
-                                a++;
-                            }
-
-                            // Skip slash
-                            a++;
-
-                            // Get number of texture 3
-                            for (int b = a; b < line_.Length; b++)
-                            {
-                                if (Char.IsDigit(line_[b]))
-                                {
-                                    a = b;
-                                    break;
-                                }
-                            }
-                            while (a < line_.Length && Char.IsDigit(line_[a]))
-                            {
-                                charOfTexture3.Add(line_[a]);
-                                a++;
-                            }
-
-                            int[] triVert = new int[3];
-                            triVert[0] = int.Parse(new String(charOfVertex1.ToArray())) - 1;
-                            triVert[1] = int.Parse(new String(charOfVertex2.ToArray())) - 1;
-                            triVert[2] = int.Parse(new String(charOfVertex3.ToArray())) - 1;
-                            int[] triVertID = new int[3];
-
-                            int[] triTex = new int[3];
-                            triTex[0] = int.Parse(new String(charOfTexture1.ToArray())) - 1;
-                            triTex[1] = int.Parse(new String(charOfTexture2.ToArray())) - 1;
-                            triTex[2] = int.Parse(new String(charOfTexture3.ToArray())) - 1;
-
-                            bool[] vertExists = new bool[3] { false, false, false };
-                            int[] vertNum = new int[3] { 0, 0, 0 };
-
-                            for (int w = 0; w < 3; w++)
-                            {
-                                if (VerticesUVIndex[triVert[w]].Count == 0)
-                                {
-                                    vertExists[w] = false;
-                                }
-                                else
-                                {
-                                    for (int e = 0; e < VerticesUVIndex[triVert[w]].Count; e++)
-                                    {
-                                        if (VerticesUVIndex[triVert[w]][e].y == triTex[w])
-                                        {
-                                            vertExists[w] = true;
-                                            vertNum[w] = int.Parse(VerticesUVIndex[triVert[w]][e].x.ToString());
-                                        }
-                                    }
-                                }
-                            }
-
-                            for (int q = 0; q < 3; q++)
-                            {
-                                if (vertExists[q] == false)
-                                {
-                                    GameObject actualObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                                    triVertID[q] = VertexCount;
-                                    meshVertices.Add(VerticesInObj[triVert[q]]);
-
-                                    if (byteLength == 0x40 && importBones && BoneIndexObj.Count > triVert[q])
-                                    {
-                                        vertexBone.Add(BoneIndexObj[triVert[q]]);
-                                        vertexWeight.Add(BoneWeightObj[triVert[q]]);
-                                    }
-
-                                    actualObject.AddComponent<VertexObject>();
-                                    actualObject.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-                                    actualObject.transform.position = VerticesInObj[triVert[q]];
-                                    actualObject.transform.SetParent(GameObject.Find("Model Data").transform);
-                                    actualObject.name = VertexCount.ToString();
-                                    actualObject.transform.SetAsLastSibling();
-                                    actualObject.tag = "Vertex";
-                                    actualObject.layer = 9;
-
-                                    VerticesUVIndex[triVert[q]].Add(new Vector2(triVertID[q], triTex[q]));
-
-                                    VertexCount++;
-
-                                    TextureUVs.Add(TextureInObj[triTex[q]]);
-                                }
-                                else
-                                {
-                                    triVertID[q] = vertNum[q];
-                                }
-                            }
-
-                            meshTriangles.Add(triVertID[2]);
-                            meshTriangles.Add(triVertID[1]);
-                            meshTriangles.Add(triVertID[0]);
-                            if (groupsInObj.Count != 0) groupsInObj[groupsInObj.Count - 1].Add(triVertID[0]);
-                            if (groupsInObj.Count != 0) groupsInObj[groupsInObj.Count - 1].Add(triVertID[1]);
-                            if (groupsInObj.Count != 0) groupsInObj[groupsInObj.Count - 1].Add(triVertID[2]);
-                        }
-                        else if (numberofslash == 6)
-                        {
-                            bool isTexture = true;
-                            for (int _x = 0; _x < line_.Length - 1; _x++)
-                            {
-                                if (line_[_x] == '/' && line_[_x + 1] == '/')
-                                {
-                                    isTexture = false;
-                                    break;
-                                }
-                            }
-
-                            if (isTexture)
-                            {
-                                string[] LineSplit = line_.Split(' ');
-                                string[] Line1 = LineSplit[1].Split('/');
-                                string[] Line2 = LineSplit[2].Split('/');
-                                string[] Line3 = LineSplit[3].Split('/');
-
-                                int Vertex1 = int.Parse(Line1[0]);
-                                int Texture1 = int.Parse(Line1[1]);
-                                int Normal1 = int.Parse(Line1[2]);
-
-                                int Vertex2 = int.Parse(Line2[0]);
-                                int Texture2 = int.Parse(Line2[1]);
-                                int Normal2 = int.Parse(Line2[2]);
-
-                                int Vertex3 = int.Parse(Line3[0]);
-                                int Texture3 = int.Parse(Line3[1]);
-                                int Normal3 = int.Parse(Line3[2]);
-
-                                int[] triVert = new int[3];
-                                triVert[0] = Vertex1 - 1;
-                                triVert[1] = Vertex2 - 1;
-                                triVert[2] = Vertex3 - 1;
-                                int[] triVertID = new int[3];
-
-                                int[] triTex = new int[3];
-                                triTex[0] = Texture1 - 1;
-                                triTex[1] = Texture2 - 1;
-                                triTex[2] = Texture3 - 1;
-
-                                int[] triNormal = new int[3];
-                                triNormal[0] = Normal1 - 1;
-                                triNormal[1] = Normal2 - 1;
-                                triNormal[2] = Normal3 - 1;
-
-                                bool[] vertExists = new bool[3] { false, false, false };
-                                int[] vertNum = new int[3] { 0, 0, 0 };
-
-                                for (int w = 0; w < 3; w++)
-                                {
-                                    if (VerticesUVIndex[triVert[w]].Count == 0)
-                                    {
-                                        vertExists[w] = false;
-                                    }
-                                    else
-                                    {
-                                        for (int e = 0; e < VerticesUVIndex[triVert[w]].Count; e++)
-                                        {
-                                            if (VerticesUVIndex[triVert[w]][e].y == triTex[w])
-                                            {
-                                                vertExists[w] = true;
-                                                vertNum[w] = int.Parse(VerticesUVIndex[triVert[w]][e].x.ToString());
-                                            }
-                                        }
-                                    }
-                                }
-
-                                for (int q = 0; q < 3; q++)
-                                {
-                                    if (vertExists[q] == false)
-                                    {
-                                        GameObject actualObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                                        triVertID[q] = VertexCount;
-                                        meshVertices.Add(VerticesInObj[triVert[q]]);
-
-                                        if (byteLength == 0x40 && importBones && BoneIndexObj.Count > triVert[q])
-                                        {
-                                            vertexBone.Add(BoneIndexObj[triVert[q]]);
-                                            vertexWeight.Add(BoneWeightObj[triVert[q]]);
-                                        }
-
-                                        actualObject.AddComponent<VertexObject>();
-                                        actualObject.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-                                        actualObject.transform.position = VerticesInObj[triVert[q]];
-                                        actualObject.transform.SetParent(GameObject.Find("Model Data").transform);
-                                        actualObject.name = VertexCount.ToString();
-                                        actualObject.transform.SetAsLastSibling();
-                                        actualObject.tag = "Vertex";
-                                        actualObject.layer = 9;
-
-                                        VerticesUVIndex[triVert[q]].Add(new Vector2(triVertID[q], triTex[q]));
-
-                                        VertexCount++;
-
-                                        TextureUVs.Add(TextureInObj[triTex[q]]);
-                                        meshNormals.Add(NormalsInObj[triNormal[q]]);
-                                    }
-                                    else
-                                    {
-                                        triVertID[q] = vertNum[q];
-                                    }
-                                }
-
-                                meshTriangles.Add(triVertID[2]);
-                                meshTriangles.Add(triVertID[1]);
-                                meshTriangles.Add(triVertID[0]);
-                                if (groupsInObj.Count != 0 && !groupsInObj[groupsInObj.Count - 1].Contains(triVertID[0])) groupsInObj[groupsInObj.Count - 1].Add(triVertID[0]);
-                                if (groupsInObj.Count != 0 && !groupsInObj[groupsInObj.Count - 1].Contains(triVertID[1])) groupsInObj[groupsInObj.Count - 1].Add(triVertID[1]);
-                                if (groupsInObj.Count != 0 && !groupsInObj[groupsInObj.Count - 1].Contains(triVertID[2])) groupsInObj[groupsInObj.Count - 1].Add(triVertID[2]);
-                            }
-                            else
-                            {
-                                List<char> charOfVertex1 = new List<char>();
-                                List<char> charOfNormal1 = new List<char>();
-
-                                List<char> charOfVertex2 = new List<char>();
-                                List<char> charOfNormal2 = new List<char>();
-
-                                List<char> charOfVertex3 = new List<char>();
-                                List<char> charOfNormal3 = new List<char>();
-
-                                int a = 0;
-                                // Get number of vertex 1
-                                for (int b = a; b < line_.Length; b++)
-                                {
-                                    if (Char.IsDigit(line_[b]))
-                                    {
-                                        a = b;
-                                        break;
-                                    }
-                                }
-                                while (a < line_.Length && Char.IsDigit(line_[a]))
-                                {
-                                    charOfVertex1.Add(line_[a]);
-                                    a++;
-                                }
-
-                                // Skip slash
-                                a++;
-                                a++;
-
-                                // Get number of normal 1
-                                for (int b = a; b < line_.Length; b++)
-                                {
-                                    if (Char.IsDigit(line_[b]))
-                                    {
-                                        a = b;
-                                        break;
-                                    }
-                                }
-                                while (a < line_.Length && Char.IsDigit(line_[a]))
-                                {
-                                    charOfNormal1.Add(line_[a]);
-                                    a++;
-                                }
-
-                                // Skip space
-                                a++;
-
-                                // Get number of vertex 2
-                                for (int b = a; b < line_.Length; b++)
-                                {
-                                    if (Char.IsDigit(line_[b]))
-                                    {
-                                        a = b;
-                                        break;
-                                    }
-                                }
-                                while (a < line_.Length && Char.IsDigit(line_[a]))
-                                {
-                                    charOfVertex2.Add(line_[a]);
-                                    a++;
-                                }
-
-                                // Skip slash
-                                a++;
-                                a++;
-
-                                // Get number of normal 2
-                                for (int b = a; b < line_.Length; b++)
-                                {
-                                    if (Char.IsDigit(line_[b]))
-                                    {
-                                        a = b;
-                                        break;
-                                    }
-                                }
-                                while (a < line_.Length && Char.IsDigit(line_[a]))
-                                {
-                                    charOfNormal2.Add(line_[a]);
-                                    a++;
-                                }
-
-                                // Skip space
-                                a++;
-
-                                // Get number of vertex 3
-                                for (int b = a; b < line_.Length; b++)
-                                {
-                                    if (Char.IsDigit(line_[b]))
-                                    {
-                                        a = b;
-                                        break;
-                                    }
-                                }
-                                while (a < line_.Length && Char.IsDigit(line_[a]))
-                                {
-                                    charOfVertex3.Add(line_[a]);
-                                    a++;
-                                }
-
-                                // Skip slash
-                                a++;
-                                a++;
-
-                                // Get number of normal 3
-                                for (int b = a; b < line_.Length; b++)
-                                {
-                                    if (Char.IsDigit(line_[b]))
-                                    {
-                                        a = b;
-                                        break;
-                                    }
-                                }
-                                while (a < line_.Length && Char.IsDigit(line_[a]))
-                                {
-                                    charOfNormal3.Add(line_[a]);
-                                    a++;
-                                }
-
-                                int[] triVert = new int[3];
-                                triVert[0] = int.Parse(new String(charOfVertex1.ToArray())) - 1;
-                                triVert[1] = int.Parse(new String(charOfVertex2.ToArray())) - 1;
-                                triVert[2] = int.Parse(new String(charOfVertex3.ToArray())) - 1;
-                                int[] triVertID = new int[3];
-
-                                int[] triNormal = new int[3];
-                                triNormal[0] = int.Parse(new String(charOfNormal1.ToArray())) - 1;
-                                triNormal[1] = int.Parse(new String(charOfNormal2.ToArray())) - 1;
-                                triNormal[2] = int.Parse(new String(charOfNormal3.ToArray())) - 1;
-
-                                bool[] vertExists = new bool[3] { false, false, false };
-                                int[] vertNum = new int[3] { 0, 0, 0 };
-
-                                for (int w = 0; w < 3; w++)
-                                {
-                                    if (VerticesUVIndex[triVert[w]].Count == 0)
-                                    {
-                                        vertExists[w] = false;
-                                    }
-                                    else
-                                    {
-                                        vertExists[w] = true;
-                                        vertNum[w] = int.Parse(VerticesUVIndex[triVert[w]][0].x.ToString());
-                                    }
-                                }
-
-                                for (int q = 0; q < 3; q++)
-                                {
-                                    if (vertExists[q] == false)
-                                    {
-                                        GameObject actualObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                                        triVertID[q] = VertexCount;
-                                        meshVertices.Add(VerticesInObj[triVert[q]]);
-
-                                        if (byteLength == 0x40 && importBones && BoneIndexObj.Count > triVert[q])
-                                        {
-                                            vertexBone.Add(BoneIndexObj[triVert[q]]);
-                                            vertexWeight.Add(BoneWeightObj[triVert[q]]);
-                                        }
-
-                                        actualObject.AddComponent<VertexObject>();
-                                        actualObject.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-                                        actualObject.transform.position = VerticesInObj[triVert[q]];
-                                        actualObject.transform.SetParent(GameObject.Find("Model Data").transform);
-                                        actualObject.name = VertexCount.ToString();
-                                        actualObject.transform.SetAsLastSibling();
-                                        actualObject.tag = "Vertex";
-                                        actualObject.layer = 9;
-                                        VertexCount++;
-
-                                        TextureUVs.Add(Vector2.zero);
-                                        meshNormals.Add(NormalsInObj[triNormal[q]]);
-                                    }
-                                    else
-                                    {
-                                        triVertID[q] = vertNum[q];
-                                    }
-                                }
-
-                                meshTriangles.Add(triVertID[2]);
-                                meshTriangles.Add(triVertID[1]);
-                                meshTriangles.Add(triVertID[0]);
-                                if (groupsInObj.Count != 0) groupsInObj[groupsInObj.Count - 1].Add(triVertID[0]);
-                                if (groupsInObj.Count != 0) groupsInObj[groupsInObj.Count - 1].Add(triVertID[1]);
-                                if (groupsInObj.Count != 0) groupsInObj[groupsInObj.Count - 1].Add(triVertID[2]);
-                            }
-                        }
-                    }
-                }
-            }
-
-            GetComponent<GroupSelection>().Groups = groupsInObj;
-
-            if (meshVertices.Count == 0)
-            {
-                GameObject actualObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                meshVertices.Add(new Vector3(0, 0, 0));
-
-                if (byteLength == 0x40)
-                {
-                    vertexBone.Add(new Vector3(0, 0, 0));
-                    vertexWeight.Add(new Vector3(0, 0, 0));
-                }
-
-                actualObject.AddComponent<VertexObject>();
-                actualObject.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-                actualObject.transform.position = meshVertices[0];
-                actualObject.transform.SetParent(GameObject.Find("Model Data").transform);
-                actualObject.name = VertexCount.ToString();
-                actualObject.transform.SetAsLastSibling();
-                actualObject.tag = "Vertex";
-                actualObject.layer = 9;
-
-                VertexCount++;
-
-                TextureUVs.Add(new Vector2(0, 0));
-
-                meshTriangles.Add(0);
-                meshTriangles.Add(0);
-                meshTriangles.Add(0);
-            }
-
-            vertexPosition = meshVertices;
-
-            if (VertexCount > vertexBone.Count && byteLength == 0x40)
-            {
-                MessageBox.Show("Some vertices were filled with bones of ID 0.");
-                int boneC = vertexBone.Count;
-                for (int x = boneC; x < VertexCount; x++)
-                {
-                    vertexBone.Add(new Vector3(0, 0, 0));
-                    vertexWeight.Add(new Vector3(0, 0, 0));
-                }
-            }
-
-            for (int x = 0; x < TextureUVs.ToArray().Length; x++)
-            {
-                TextureUVs[x] = new Vector2(TextureUVs[x].x, TextureUVs[x].y * -1);
-            }
-
-            mf.mesh.vertices = meshVertices.ToArray();
-
-            while (TextureUVs.ToArray().Length < meshVertices.ToArray().Length)
-            {
-                TextureUVs.Add(new Vector2(0, 0));
-            }
-
-            while (meshNormals.ToArray().Length < meshVertices.ToArray().Length)
-            {
-                meshNormals.Add(Vector3.forward);
-            }
-
-            mf.mesh.uv = TextureUVs.ToArray();
-            mf.mesh.normals = meshNormals.ToArray();
-            mf.mesh.triangles = meshTriangles.ToArray();
-
-            /*MessageBox.Show("Mesh imported correctly.\n\nInitial vertices: " + InitialVertexCount.ToString() + "\nNew vertices: " + VertexCount.ToString());
-            MessageBox.Show(
-                    "Group 1 Vertices: " + g.Groups[0].Count.ToString("X2") + "\n" +
-                    "Group 1 Triangles: " + g.TrianglesPerGroup[0].ToString("X2") + "\n" +
-                    "Group 2 Vertices: " + g.Groups[1].Count.ToString("X2") + "\n" +
-                    "Group 2 Triangles: " + g.TrianglesPerGroup[1].ToString("X2") + "\n");*/
-        }
-        catch (Exception exe)
-        {
-            MessageBox.Show(exe.ToString());
-        }
-    }
-
     public void Undo()
 	{
 		if(undo_action.Count == 0) return;
@@ -4505,258 +3526,4 @@ public class RenderFile : MonoBehaviour {
 			ConsoleMessage("<color=orange>\nReverted last action</color>.");
 		}
 	}
-
-    public void OpenRE2(int VertexLength_, byte[] TriangleFile, byte[] TextureFile, byte[] VertexFile, bool stage, int mod)
-    {
-        if (fileOpen == false)
-        {
-            if (stage == true)
-            {
-                stageMode = true;
-            }
-            fileOpen = true;
-            selectedVertex.Clear();
-            vertexPosition.Clear();
-
-            for (int z_ = 0; z_ < GameObject.Find("Model Data").transform.childCount; z_++)
-            {
-                Destroy(GameObject.Find("Model Data").transform.Find(z_.ToString()));
-            }
-
-            meshVertices.Clear();
-            meshTriangles.Clear();
-            meshNormals.Clear();
-            TextureUVs.Clear();
-
-            byteLength = VertexLength_;
-            fileBytes = VertexFile;
-            triangleFile = TriangleFile;
-            textureMapFile = TextureFile;
-
-            DialogResult asd = DialogResult.No;
-            asd = MessageBox.Show("Do you want to invert the endianess?", "", MessageBoxButtons.YesNo);
-
-            if (asd == DialogResult.Yes)
-            {
-                endianess = true;
-            }
-
-            MessageBox.Show("RE2 mode");
-
-            for (int x = 0; x < (fileBytes.Length / byteLength); x++)
-            {
-                float vertexFloatX = 0;
-                float vertexFloatZ = 0;
-                float vertexFloatY = 0;
-
-                if (asd == DialogResult.No)
-                {
-                    vertexFloatX = 150 * BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[0 + vertexOffset + (x * byteLength)] * 0x1000000 + fileBytes[1 + vertexOffset + (x * byteLength)] * 0x10000 + fileBytes[2 + vertexOffset + (x * byteLength)] * 0x100 + fileBytes[3 + vertexOffset + (x * byteLength)]), 0);
-                    vertexFloatZ = 150 * BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[4 + vertexOffset + (x * byteLength)] * 0x1000000 + fileBytes[5 + vertexOffset + (x * byteLength)] * 0x10000 + fileBytes[6 + vertexOffset + (x * byteLength)] * 0x100 + fileBytes[7 + vertexOffset + (x * byteLength)]), 0);
-                    vertexFloatY = 150 * BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[8 + vertexOffset + (x * byteLength)] * 0x1000000 + fileBytes[9 + vertexOffset + (x * byteLength)] * 0x10000 + fileBytes[10 + vertexOffset + (x * byteLength)] * 0x100 + fileBytes[11 + vertexOffset + (x * byteLength)]), 0);
-                }
-                else
-                {
-                    vertexFloatX = 150 * BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[0 + vertexOffset + (x * byteLength)] * 1 + fileBytes[1 + vertexOffset + (x * byteLength)] * 0x100 + fileBytes[2 + vertexOffset + (x * byteLength)] * 0x10000 + fileBytes[3 + vertexOffset + (x * byteLength)] * 0x1000000), 0);
-                    vertexFloatZ = 150 * BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[4 + vertexOffset + (x * byteLength)] * 1 + fileBytes[5 + vertexOffset + (x * byteLength)] * 0x100 + fileBytes[6 + vertexOffset + (x * byteLength)] * 0x10000 + fileBytes[7 + vertexOffset + (x * byteLength)] * 0x1000000), 0);
-                    vertexFloatY = 150 * BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[8 + vertexOffset + (x * byteLength)] * 1 + fileBytes[9 + vertexOffset + (x * byteLength)] * 0x100 + fileBytes[10 + vertexOffset + (x * byteLength)] * 0x10000 + fileBytes[11 + vertexOffset + (x * byteLength)] * 0x1000000), 0);
-                }
-
-                if (stageMode == true)
-                {
-                    vertexFloatX = vertexFloatX / 20;
-                    vertexFloatZ = vertexFloatZ / 20;
-                    vertexFloatY = vertexFloatY / 20;
-                }
-
-                vertexPosition.Add(new Vector3(vertexFloatX, vertexFloatY, vertexFloatZ));
-
-                if (byteLength == 0x40)
-                {
-                    float normalFloatX = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[16 + vertexOffset + 0 + (x * byteLength)] * 0x1000000 + fileBytes[16 + vertexOffset + 1 + (x * byteLength)] * 0x10000 + fileBytes[16 + vertexOffset + 2 + (x * byteLength)] * 0x100 + fileBytes[16 + vertexOffset + 3 + (x * byteLength)]), 0);
-                    float normalFloatZ = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[16 + vertexOffset + 4 + (x * byteLength)] * 0x1000000 + fileBytes[16 + vertexOffset + 5 + (x * byteLength)] * 0x10000 + fileBytes[16 + vertexOffset + 6 + (x * byteLength)] * 0x100 + fileBytes[16 + vertexOffset + 7 + (x * byteLength)]), 0);
-                    float normalFloatY = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[16 + vertexOffset + 8 + (x * byteLength)] * 0x1000000 + fileBytes[16 + vertexOffset + 9 + (x * byteLength)] * 0x10000 + fileBytes[16 + vertexOffset + 10 + (x * byteLength)] * 0x100 + fileBytes[16 + vertexOffset + 11 + (x * byteLength)]), 0);
-                    meshNormals.Add(new Vector3(normalFloatX, normalFloatY, normalFloatZ));
-
-                    vertexBone.Add(new Vector3((float)fileBytes[35 + vertexOffset + (x * byteLength)], (float)fileBytes[39 + vertexOffset + (x * byteLength)], (float)fileBytes[43 + vertexOffset + (x * byteLength)]));
-
-                    float weightFloatX = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[48 + vertexOffset + 0 + (x * byteLength)] * 0x1000000 + fileBytes[48 + vertexOffset + 1 + (x * byteLength)] * 0x10000 + fileBytes[48 + vertexOffset + 2 + (x * byteLength)] * 0x100 + fileBytes[48 + vertexOffset + 3 + (x * byteLength)]), 0);
-                    float weightFloatZ = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[48 + vertexOffset + 4 + (x * byteLength)] * 0x1000000 + fileBytes[48 + vertexOffset + 5 + (x * byteLength)] * 0x10000 + fileBytes[48 + vertexOffset + 6 + (x * byteLength)] * 0x100 + fileBytes[48 + vertexOffset + 7 + (x * byteLength)]), 0);
-                    float weightFloatY = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[48 + vertexOffset + 8 + (x * byteLength)] * 0x1000000 + fileBytes[48 + vertexOffset + 9 + (x * byteLength)] * 0x10000 + fileBytes[48 + vertexOffset + 10 + (x * byteLength)] * 0x100 + fileBytes[48 + vertexOffset + 11 + (x * byteLength)]), 0);
-
-                    vertexWeight.Add(new Vector3(weightFloatX, weightFloatY, weightFloatZ));
-                }
-                else if (byteLength == 0x1C)
-                {
-                    float normalFloatX = toFloat(fileBytes[12 + (x * byteLength)] * 0x100 + fileBytes[13 + (x * byteLength)]);
-                    float normalFloatY = toFloat(fileBytes[14 + (x * byteLength)] * 0x100 + fileBytes[15 + (x * byteLength)]);
-                    float normalFloatZ = toFloat(fileBytes[16 + (x * byteLength)] * 0x100 + fileBytes[17 + (x * byteLength)]);
-                    meshNormals.Add(new Vector3(normalFloatX, normalFloatY, normalFloatZ));
-                }
-                else if (byteLength == 0x20)
-                {
-                    float normalFloatX = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[16 + vertexOffset + 0 + (x * byteLength)] * 0x1000000 + fileBytes[16 + vertexOffset + 1 + (x * byteLength)] * 0x10000 + fileBytes[16 + vertexOffset + 2 + (x * byteLength)] * 0x100 + fileBytes[16 + vertexOffset + 3 + (x * byteLength)]), 0);
-                    float normalFloatZ = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[16 + vertexOffset + 4 + (x * byteLength)] * 0x1000000 + fileBytes[16 + vertexOffset + 5 + (x * byteLength)] * 0x10000 + fileBytes[16 + vertexOffset + 6 + (x * byteLength)] * 0x100 + fileBytes[16 + vertexOffset + 7 + (x * byteLength)]), 0);
-                    float normalFloatY = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[16 + vertexOffset + 8 + (x * byteLength)] * 0x1000000 + fileBytes[16 + vertexOffset + 9 + (x * byteLength)] * 0x10000 + fileBytes[16 + vertexOffset + 10 + (x * byteLength)] * 0x100 + fileBytes[16 + vertexOffset + 11 + (x * byteLength)]), 0);
-                    meshNormals.Add(new Vector3(normalFloatX, normalFloatY, normalFloatZ));
-                }
-
-                GameObject actualObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                meshVertices.Add(vertexPosition[x]);
-
-                actualObject.AddComponent<VertexObject>();
-                actualObject.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
-                actualObject.transform.position = vertexPosition[x];
-                actualObject.name = x.ToString();
-                actualObject.transform.SetParent(GameObject.Find("Model Data").transform);
-                actualObject.transform.SetAsLastSibling();
-                actualObject.tag = "Vertex";
-                actualObject.layer = 9;
-            }
-
-            mf.mesh.vertices = vertexPosition.ToArray();
-
-            VertexCount = GameObject.Find("Model Data").transform.childCount;
-
-            if (triangleFile.Length > 1)
-            {
-                //ConsoleMessage(" <color=lime>TRIANGLES LOADED.</color>");
-
-                int[] num = new int[3];
-                int a = 0;
-                int q = 0;
-
-                for (int x = 0; x < (TriangleFile.Length / 6); x++)
-                {
-                    int[] tri = new int[3];
-                    tri[0] = (TriangleFile[(6 * x) + 1] * 0x100) + (TriangleFile[(6 * x) + 0]);
-                    tri[1] = (TriangleFile[(6 * x) + 3] * 0x100) + (TriangleFile[(6 * x) + 2]);
-                    tri[2] = (TriangleFile[(6 * x) + 5] * 0x100) + (TriangleFile[(6 * x) + 4]);
-
-                    meshTriangles.Add(tri[0]);
-                    meshTriangles.Add(tri[1]);
-                    meshTriangles.Add(tri[2]);
-
-                    mf.mesh.triangles = meshTriangles.ToArray();
-                }
-            }
-
-            if (textureMapFile.Length > 1)
-            {
-                int x = 4;
-                while (textureMapFile[x] != 0x100)
-                {
-                    x++;
-                }
-
-                if (x == 8)
-                {
-                    textureType = 0;
-                }
-                else
-                {
-                    textureType = 1;
-                }
-            }
-
-            if (byteLength == 64)
-            {
-                if (textureMapFile.Length > 1)
-                {
-                    if (textureType == 0)
-                    {
-                        for (int x = 0; x < VertexCount; x++)
-                        {
-                            float x_ = toFloat(textureMapFile[4 + (8 * x)] * 0x100 + textureMapFile[5 + (8 * x)]);
-                            float y_ = toFloat(textureMapFile[6 + (8 * x)] * 0x100 + textureMapFile[7 + (8 * x)]);
-
-                            TextureUVs.Add(new Vector2(x_, y_));
-                        }
-                    }
-                    else if (textureType == 1)
-                    {
-                        for (int x = 0; x < VertexCount; x++)
-                        {
-                            float x_ = toFloat(textureMapFile[4 + (12 * x)] * 0x100 + textureMapFile[5 + (12 * x)]);
-                            float y_ = toFloat(textureMapFile[6 + (12 * x)] * 0x100 + textureMapFile[7 + (12 * x)]);
-
-                            TextureUVs.Add(new Vector2(x_, y_));
-                        }
-                    }
-                }
-            }
-            else if (byteLength == 28)
-            {
-                for (int x = 0; x < VertexCount; x++)
-                {
-                    float x_ = toFloat(fileBytes[x * 24] * 0x100 + fileBytes[x * 25]);
-                    float y_ = toFloat(fileBytes[x * 26] * 0x100 + fileBytes[x * 27]);
-
-                    TextureUVs.Add(new Vector2(x_, y_));
-                }
-            }
-            else if (byteLength == 0x20)
-            {
-                for (int x = 0; x < VertexCount; x++)
-                {
-                    float x_ = BitConverter.ToSingle(
-                        BitConverter.GetBytes(
-                            fileBytes[x * 0x18] * 0x1000000 +
-                            fileBytes[x * 0x19] * 0x10000 +
-                            fileBytes[x * 0x1A] * 0x100 +
-                            fileBytes[x * 0x1B]), 0);
-
-                    float y_ = BitConverter.ToSingle(
-                        BitConverter.GetBytes(
-                            fileBytes[x * 0x1C] * 0x1000000 +
-                            fileBytes[x * 0x1D] * 0x10000 +
-                            fileBytes[x * 0x1E] * 0x100 +
-                            fileBytes[x * 0x1F]), 0);
-
-                    TextureUVs.Add(new Vector2(x_, y_));
-                }
-            }
-
-            DialogResult result_ = MessageBox.Show("Do you want to load a .png texture?", "Texture loading", MessageBoxButtons.YesNo);
-            if (result_ == DialogResult.Yes)
-            {
-                ////ConsoleMessage(" <color=cyan>TEXTURE IMAGE LOADED.</color>");
-                VistaOpenFileDialog openFileDialog2 = new VistaOpenFileDialog();
-                openFileDialog2.DefaultExt = "png";
-                openFileDialog2.ShowDialog();
-
-                if (openFileDialog2.FileName != "" && File.Exists(openFileDialog2.FileName))
-                {
-                    try
-                    {
-                        byte[] textureBytes = File.ReadAllBytes(openFileDialog2.FileName);
-                        Texture2D extTexture = new Texture2D(1024, 1024);
-                        extTexture.LoadImage(textureBytes);
-                        RenderedMesh.GetComponent<Renderer>().material.mainTexture = extTexture;
-                        RenderedMesh.GetComponent<RenderMaterial>().Materials_[0] = RenderedMesh.GetComponent<Renderer>().material;
-                    }
-                    catch (Exception)
-                    {
-                        ConsoleMessage("\n<color=orange>Error loading texture.</color>");
-                    }
-                }
-                else
-                {
-                    RenderedMesh.GetComponent<Renderer>().material = RenderedMesh.GetComponent<RenderMaterial>().Materials_[1];
-                }
-            }
-            else
-            {
-                //ConsoleMessage(" <color=red>TEXTURE IMAGE NOT FOUND.</color>");
-                RenderedMesh.GetComponent<Renderer>().material = RenderedMesh.GetComponent<RenderMaterial>().Materials_[1];
-            }
-
-            mf.mesh.uv = TextureUVs.ToArray();
-            mf.mesh.normals = meshNormals.ToArray();
-            FinishedDrawingModel = true;
-            fileOpen = true;
-            ConsoleMessage(" <color=lime>MODEL LOADED.</color>");
-        }
-    }
-
 }

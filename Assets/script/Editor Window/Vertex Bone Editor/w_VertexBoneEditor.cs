@@ -9,13 +9,15 @@ public class w_VertexBoneEditor : MonoBehaviour {
 	public InputField Bone0Input;
 	public InputField Bone1Input;
 	public InputField Bone2Input;
-	public Text VerticeIndicator;
+    public InputField Bone3Input;
+    public Text VerticeIndicator;
 
 	public InputField Weight0Input;
 	public InputField Weight1Input;
 	public InputField Weight2Input;
+    public InputField Weight3Input;
 
-	public void EnableWindow()
+    public void EnableWindow()
 	{
 		if(GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().selectedVertex.Count == 1)
 		{
@@ -69,7 +71,22 @@ public class w_VertexBoneEditor : MonoBehaviour {
 		}
 	}
 
-	public void SaveWeight0()
+    public void SaveBone3()
+    {
+        if (Bone2Input.text != "")
+        {
+            foreach (GameObject vertexSelected in GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().selectedVertex)
+            {
+                GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().ChangeBoneID(int.Parse(vertexSelected.name), 3, int.Parse(Bone3Input.text));
+            }
+        }
+        else
+        {
+            MessageBox.Show("Cannot parse bone.");
+        }
+    }
+
+    public void SaveWeight0()
 	{
 		if(Weight0Input.text != "")
 		{
@@ -114,9 +131,24 @@ public class w_VertexBoneEditor : MonoBehaviour {
 		}
 	}
 
-	public void TryCloseWindow()
+    public void SaveWeight3()
+    {
+        if (Weight3Input.text != "")
+        {
+            foreach (GameObject vertexSelected in GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().selectedVertex)
+            {
+                GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().ChangeWeight(int.Parse(vertexSelected.name), 3, float.Parse(Weight3Input.text));
+            }
+        }
+        else
+        {
+            MessageBox.Show("Cannot parse weight.");
+        }
+    }
+
+    public void TryCloseWindow()
 	{
-		if(Bone0Input.text != "" || Bone1Input.text != "" || Bone2Input.text != "")
+		if(Bone0Input.text != "" || Bone1Input.text != "" || Bone2Input.text != "" || Bone3Input.text != "")
 		{
 			Debug.Log("You have unsaved changes. Do you want to save them?");
 		}
