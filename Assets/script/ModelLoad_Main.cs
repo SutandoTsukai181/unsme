@@ -37,9 +37,11 @@ public class ModelLoad_Main : MonoBehaviour
         OverallMeshCount = 0;
 
         // NOW OPEN FILE
-        VistaOpenFileDialog openFileDialog1 = new VistaOpenFileDialog();
-        openFileDialog1.DefaultExt = "xfbin";
-        openFileDialog1.AddExtension = true;
+        VistaOpenFileDialog openFileDialog1 = new VistaOpenFileDialog
+        {
+            DefaultExt = "xfbin",
+            AddExtension = true
+        };
         openFileDialog1.ShowDialog();
 
         string pathToXfbin = openFileDialog1.FileName;
@@ -87,15 +89,29 @@ public class ModelLoad_Main : MonoBehaviour
                             /
                             (fileBytes[x + 0x6A] * 0x1000000 + fileBytes[x + 0x6B] * 0x10000 + fileBytes[x + 0x6C] * 0x100 + fileBytes[x + 0x6D]);
 
-                        if (VertexLength_ != 0x1C && VertexLength_ != 0x20 && VertexLength_ != 0x40)
+                        if (VertexLength_ != 0x20)
                         {
-                            if (fileBytes[x + 28] * 0x1000000 + fileBytes[x + 29] * 0x10000 + fileBytes[x + 30] * 0x100 + fileBytes[x + 31] == 0)
+                            switch (fileBytes[x + 0x6E])
                             {
-                                VertexLength_ = 28;
-                            }
-                            else
-                            {
-                                VertexLength_ = 64;
+                                case 0x06: // Storm teeth/eyes
+                                           // NormalsHalfFloat
+                                    VertexLength_ = 0x1C;
+                                    break;
+                                case 0x07: // JoJo teeth
+                                           // NormalsTanBiTanHalfFloat
+                                    VertexLength_ = 0x2C;
+                                    break;
+                                case 0x11: // Storm most meshes + JoJo eyes
+                                           // NormalsFloat
+                                    VertexLength_ = 0x40;
+                                    break;
+                                case 0x13: // JoJo most meshes
+                                           // NormalsTanBiTanFloat
+                                    VertexLength_ = 0x60;
+                                    break;
+                                default:
+                                    VertexLength_ = 0x40;
+                                    break;
                             }
                         }
 
@@ -260,7 +276,7 @@ public class ModelLoad_Main : MonoBehaviour
                 meshBytes[22] * 0x100 +
                 meshBytes[23];
 
-            if (VertexLength == 0x40)
+            if (VertexLength == 0x40 || VertexLength == 0x60)
             {
                 SizeTextureCoords =
                     meshBytes[24] * 0x1000000 +
@@ -290,7 +306,7 @@ public class ModelLoad_Main : MonoBehaviour
             }
 
             // CHECK VERTEX LENGTH
-            if (VertexLength == 0x40)
+            if (VertexLength == 0x40 || VertexLength == 0x60)
             {
                 // GENERATE TEXTURE COORDS FILE
                 for (int x = 0; x < SizeTextureCoords; x++)

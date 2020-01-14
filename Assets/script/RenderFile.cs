@@ -274,6 +274,35 @@ public class RenderFile : MonoBehaviour {
                         if (WeightMode == 0) vertexWeight.Add(new Vector4(weightFloatX, weightFloatY, weightFloatZ, weightFloatW));
 						if(WeightMode == 1) vertexWeight.Add(new Vector4(weightFloatX, weightFloatZ, weightFloatY, weightFloatW));
 					}
+					else if (byteLength == 0x60)
+					{
+						float normalFloatX = BitConverter.ToSingle(BitConverter.GetBytes(
+							fileBytes[16 + vertexOffset + 0 + (x * byteLength)] * 0x1000000 +
+							fileBytes[16 + vertexOffset + 1 + (x * byteLength)] * 0x10000 +
+							fileBytes[16 + vertexOffset + 2 + (x * byteLength)] * 0x100 +
+							fileBytes[16 + vertexOffset + 3 + (x * byteLength)]), 0);
+						float normalFloatY = BitConverter.ToSingle(BitConverter.GetBytes(
+							fileBytes[16 + vertexOffset + 4 + (x * byteLength)] * 0x1000000 +
+							fileBytes[16 + vertexOffset + 5 + (x * byteLength)] * 0x10000 +
+							fileBytes[16 + vertexOffset + 6 + (x * byteLength)] * 0x100 +
+							fileBytes[16 + vertexOffset + 7 + (x * byteLength)]), 0);
+						float normalFloatZ = BitConverter.ToSingle(BitConverter.GetBytes(
+							fileBytes[16 + vertexOffset + 8 + (x * byteLength)] * 0x1000000 +
+							fileBytes[16 + vertexOffset + 9 + (x * byteLength)] * 0x10000 +
+							fileBytes[16 + vertexOffset + 10 + (x * byteLength)] * 0x100 +
+							fileBytes[16 + vertexOffset + 11 + (x * byteLength)]), 0);
+						meshNormals.Add(new Vector3(normalFloatX, normalFloatY, normalFloatZ));
+
+						vertexBone.Add(new Vector4((float)fileBytes[67 + vertexOffset + (x * byteLength)], (float)fileBytes[71 + vertexOffset + (x * byteLength)], (float)fileBytes[75 + vertexOffset + (x * byteLength)], (float)fileBytes[79 + vertexOffset + (x * byteLength)]));
+
+						float weightFloatX = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[80 + vertexOffset + 0 + (x * byteLength)] * 0x1000000 + fileBytes[80 + vertexOffset + 1 + (x * byteLength)] * 0x10000 + fileBytes[80 + vertexOffset + 2 + (x * byteLength)] * 0x100 + fileBytes[80 + vertexOffset + 3 + (x * byteLength)]), 0);
+						float weightFloatY = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[80 + vertexOffset + 4 + (x * byteLength)] * 0x1000000 + fileBytes[80 + vertexOffset + 5 + (x * byteLength)] * 0x10000 + fileBytes[80 + vertexOffset + 6 + (x * byteLength)] * 0x100 + fileBytes[80 + vertexOffset + 7 + (x * byteLength)]), 0);
+						float weightFloatZ = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[80 + vertexOffset + 8 + (x * byteLength)] * 0x1000000 + fileBytes[80 + vertexOffset + 9 + (x * byteLength)] * 0x10000 + fileBytes[80 + vertexOffset + 10 + (x * byteLength)] * 0x100 + fileBytes[80 + vertexOffset + 11 + (x * byteLength)]), 0);
+						float weightFloatW = BitConverter.ToSingle(BitConverter.GetBytes(fileBytes[80 + vertexOffset + 12 + (x * byteLength)] * 0x1000000 + fileBytes[80 + vertexOffset + 13 + (x * byteLength)] * 0x10000 + fileBytes[80 + vertexOffset + 14 + (x * byteLength)] * 0x100 + fileBytes[80 + vertexOffset + 15 + (x * byteLength)]), 0);
+
+						if (WeightMode == 0) vertexWeight.Add(new Vector4(weightFloatX, weightFloatY, weightFloatZ, weightFloatW));
+						if (WeightMode == 1) vertexWeight.Add(new Vector4(weightFloatX, weightFloatZ, weightFloatY, weightFloatW));
+					}
 					else if(byteLength == 0x1C)
 					{
 						float normalFloatX = toFloat(fileBytes[12 + (x * byteLength)] * 0x100 + fileBytes[13 + (x * byteLength)]);
@@ -341,7 +370,6 @@ public class RenderFile : MonoBehaviour {
 								triangleGroup++;
 							}
 						}
-
 						for(int u = 0; u <= triangleGroup; u++)
 						{
 							int numberOfTriangles = 0;
@@ -442,6 +470,11 @@ public class RenderFile : MonoBehaviour {
 									offsets.Add(u + 2);
 									triangleGroup++;
 								}
+								else if (newTriFi[u] == 0xFF && newTriFi[u + 1] == 0xFF && newTriFi[u + 2] == 0xFF)
+								{
+									offsets.Add(u + 3);
+									triangleGroup++;
+								}
 							}
 
 							for(int u = 0; u <= triangleGroup; u++)
@@ -497,7 +530,7 @@ public class RenderFile : MonoBehaviour {
 					textureType = 1;
 				}
 
-				if(byteLength == 0x40)
+				if(byteLength == 0x40 || byteLength == 0x60)
 				{
 					if(textureMapFile.Length > 1)
 					{
@@ -1208,6 +1241,76 @@ public class RenderFile : MonoBehaviour {
 						vertexFileNew[0x1A + (byteLength * x)] = normalz[2];
 						vertexFileNew[0x1B + (byteLength * x)] = normalz[3];
 					}
+					else if (byteLength == 0x60)
+					{
+						// BONE DATA
+						vertexFileNew[0x43 + (byteLength * x)] = (byte)vertexBone[x].x;
+						vertexFileNew[0x47 + (byteLength * x)] = (byte)vertexBone[x].y;
+						vertexFileNew[0x4B + (byteLength * x)] = (byte)vertexBone[x].z;
+						vertexFileNew[0x4F + (byteLength * x)] = (byte)vertexBone[x].w;
+
+						// WEIGHT DATA
+						byte[] weightx = BitConverter.GetBytes(vertexWeight[x].x).ToArray();
+						if (WeightMode == 1) weightx = BitConverter.GetBytes(vertexWeight[x].x).ToArray();
+						Array.Reverse(weightx);
+
+						byte[] weighty = BitConverter.GetBytes(vertexWeight[x].y).ToArray();
+						if (WeightMode == 1) weighty = BitConverter.GetBytes(vertexWeight[x].z).ToArray();
+						Array.Reverse(weighty);
+
+						byte[] weightz = BitConverter.GetBytes(vertexWeight[x].z).ToArray();
+						if (WeightMode == 1) weightz = BitConverter.GetBytes(vertexWeight[x].y).ToArray();
+						Array.Reverse(weightz);
+
+						byte[] weightw = BitConverter.GetBytes(vertexWeight[x].w).ToArray();
+						if (WeightMode == 1) weightw = BitConverter.GetBytes(vertexWeight[x].w).ToArray();
+						Array.Reverse(weightw);
+
+						vertexFileNew[0x50 + (byteLength * x)] = weightx[0];
+						vertexFileNew[0x51 + (byteLength * x)] = weightx[1];
+						vertexFileNew[0x52 + (byteLength * x)] = weightx[2];
+						vertexFileNew[0x53 + (byteLength * x)] = weightx[3];
+
+						vertexFileNew[0x54 + (byteLength * x)] = weighty[0];
+						vertexFileNew[0x55 + (byteLength * x)] = weighty[1];
+						vertexFileNew[0x56 + (byteLength * x)] = weighty[2];
+						vertexFileNew[0x57 + (byteLength * x)] = weighty[3];
+
+						vertexFileNew[0x58 + (byteLength * x)] = weightz[0];
+						vertexFileNew[0x59 + (byteLength * x)] = weightz[1];
+						vertexFileNew[0x5A + (byteLength * x)] = weightz[2];
+						vertexFileNew[0x5B + (byteLength * x)] = weightz[3];
+
+						vertexFileNew[0x5C + (byteLength * x)] = weightw[0];
+						vertexFileNew[0x5D + (byteLength * x)] = weightw[1];
+						vertexFileNew[0x5E + (byteLength * x)] = weightw[2];
+						vertexFileNew[0x5F + (byteLength * x)] = weightw[3];
+
+						// NORMALS
+						byte[] normalx = BitConverter.GetBytes(meshNormals[x].x).ToArray();
+						Array.Reverse(normalx);
+
+						vertexFileNew[0x10 + (byteLength * x)] = normalx[0];
+						vertexFileNew[0x11 + (byteLength * x)] = normalx[1];
+						vertexFileNew[0x12 + (byteLength * x)] = normalx[2];
+						vertexFileNew[0x13 + (byteLength * x)] = normalx[3];
+
+						byte[] normaly = BitConverter.GetBytes(meshNormals[x].y).ToArray();
+						Array.Reverse(normaly);
+
+						vertexFileNew[0x14 + (byteLength * x)] = normaly[0];
+						vertexFileNew[0x15 + (byteLength * x)] = normaly[1];
+						vertexFileNew[0x16 + (byteLength * x)] = normaly[2];
+						vertexFileNew[0x17 + (byteLength * x)] = normaly[3];
+
+						byte[] normalz = BitConverter.GetBytes(meshNormals[x].z).ToArray();
+						Array.Reverse(normalz);
+
+						vertexFileNew[0x18 + (byteLength * x)] = normalz[0];
+						vertexFileNew[0x19 + (byteLength * x)] = normalz[1];
+						vertexFileNew[0x1A + (byteLength * x)] = normalz[2];
+						vertexFileNew[0x1B + (byteLength * x)] = normalz[3];
+					}
 					else if(byteLength == 0x20)
 					{
 						// NORMALS
@@ -1283,7 +1386,7 @@ public class RenderFile : MonoBehaviour {
 							vertexFileNew[0x1E + (byteLength * x)] = 0;
 							vertexFileNew[0x1F + (byteLength * x)] = 0;
 						}
-						else if(byteLength == 0x40)
+						else if(byteLength == 0x40 || byteLength == 0x60)
 						{
 							if(textureType == 0)
 							{
@@ -1336,7 +1439,7 @@ public class RenderFile : MonoBehaviour {
 			}
 			else
 			{
-				if(byteLength == 0x40)
+				if(byteLength == 0x40 || byteLength == 0x60)
 				{
 					for(int x = 0; x < textureMapFile.Length; x++)
 					{
@@ -1345,7 +1448,7 @@ public class RenderFile : MonoBehaviour {
 				}
 			}
 	
-			if(GameObject.Find("Save Triangles").GetComponent<Toggle>().isOn == true)
+			if(GameObject.Find("Save Triangles").GetComponent<Toggle>().isOn == true && byteLength != 0x60)
 			{
                 GroupSelection g = GetComponent<GroupSelection>();
                 int remove = 0;
@@ -1457,7 +1560,7 @@ public class RenderFile : MonoBehaviour {
 			}
 
 			//Check vertex length
-			if(byteLength == 0x40)
+			if(byteLength == 0x40 || byteLength == 0x60)
 			{
 				//Add texture section size
 				int TextureSectionSize = textureFileNew.Count;
@@ -1634,7 +1737,7 @@ public class RenderFile : MonoBehaviour {
 				newNDP3File.Add(triangleFileNew[x]);
 			}
 
-			if(byteLength == 0x40)
+			if(byteLength == 0x40 || byteLength == 0x60)
 			{
 				// Add texture section
 				for(int x = 0; x < textureFileNew.Count; x++)
@@ -1791,7 +1894,7 @@ public class RenderFile : MonoBehaviour {
 			}
 
 			// FIX 6C AND 80
-			if(dial == DialogResult.Yes)
+			if(dial == DialogResult.Yes && byteLength != 0x60)
 			{
 				if(groupsInXfbin == 1)
 				{
@@ -2859,7 +2962,7 @@ public class RenderFile : MonoBehaviour {
 
 	public void OpenVertexBoneEditor()
 	{
-		if(byteLength == 64)
+		if(byteLength == 64 || byteLength == 96)
 		{
 			if(CustomBones.Count > 0)
 			{
