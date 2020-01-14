@@ -28,6 +28,10 @@ public class VertexObject : MonoBehaviour {
 
 	public void SelectObject()
 	{
+		w_ToolBox toolBox = FindObjectOfType<w_ToolBox>();
+		if (toolBox != null && toolBox.isOpen) return;
+
+        //if (GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().WindowOpen == true) return;
 		Selected = true;
 		GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().selectedVertex.Add(this.gameObject);
 		this.GetComponent<Renderer>().material.color = Color.red;
@@ -35,6 +39,10 @@ public class VertexObject : MonoBehaviour {
 
 	public void UnselectObject()
 	{
+		w_ToolBox toolBox = FindObjectOfType<w_ToolBox>();
+		if (toolBox != null && toolBox.isOpen) return;
+
+		//if (GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().WindowOpen == true) return;
 		Selected = false;
 		GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().selectedVertex.Remove(this.gameObject);
 		this.GetComponent<Renderer>().material.color = Color.white;

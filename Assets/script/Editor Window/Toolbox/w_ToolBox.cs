@@ -7,13 +7,15 @@ public class w_ToolBox : MonoBehaviour {
 	private RenderFile r_file;
 	public GameObject window_boneEditor;
 	public GameObject window_uvEditor;
+	public bool isOpen;
 
-	public void Start()
+    public void Start()
 	{
+		isOpen = true;
 		r_file = GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>();
 	}
 
-	public void CloseWindow()
+    public void CloseWindow()
 	{
 		GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().WindowOpen = false;
 		this.gameObject.SetActive(false);
