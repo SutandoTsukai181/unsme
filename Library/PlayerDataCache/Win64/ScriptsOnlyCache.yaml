@@ -50,7 +50,7 @@ ScriptsOnlyBuild:
     - UnityEngine.Networking.NetworkCallbacks
     - UnityEngine.Networking.NetworkIdentity
   sceneClasses:
-    Assets/re2viewer.unity:
+    Assets/modelViewer.unity:
     - Class: 1
       Script: {instanceID: 0}
     - Class: 4
@@ -878,5 +878,5 @@ ScriptsOnlyBuild:
     className: PlayableTrack
   platform: 19
   scenePathNames:
-  - Assets/re2viewer.unity
-  playerPath: C:/Users/Mohamed/Documents/GitHub/unsme/UNS Model Editor.exe
+  - Assets/modelViewer.unity
+  playerPath: C:/Users/Mohamed/Documents/GitHub/UNSME v0.2j/UNS Model Editor.exe
