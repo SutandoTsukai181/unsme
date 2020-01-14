@@ -2,7 +2,13 @@
 
 ![unsmelogo](https://user-images.githubusercontent.com/33766519/35544569-cfeb386a-0549-11e8-8bdf-f2c8fa1acc6e.png)
 
-Latest release in: github.com/zealottormunds/unsme/releases
+Latest release in: github.com/SutandoTsukai181/unsme/releases
+
+# Changelog 2.0j:
+- Added 96 format support (for JoJo models).
+- You can load JoJo models for rigging, but you can NOT add vertices or else the triangles will break.
+- Added 4th bone and weight support (in bone tool as well).
+- Fixed an issue where you could select/unselect vertices while the bone tool is open.
 
 # Changelog 1.75a:
 - Added the old weight saving mode (for people who were used to 1.6 or previous weights).
