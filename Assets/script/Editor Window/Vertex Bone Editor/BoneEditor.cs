@@ -38,7 +38,7 @@ public class BoneEditor : MonoBehaviour {
 			BoneListCmn = GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().CustomBones;
 		}
 
-		for(int x = 0; x < 3; x++)
+		for(int x = 0; x < 4; x++)
 		{
 			for(int y = 0; y < BoneListCmn.Count; y++)
 			{
