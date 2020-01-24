@@ -73,7 +73,7 @@ public class w_VertexBoneEditor : MonoBehaviour {
 
     public void SaveBone3()
     {
-        if (Bone2Input.text != "")
+        if (Bone3Input.text != "")
         {
             foreach (GameObject vertexSelected in GameObject.Find("MODEL VIEWER").GetComponent<RenderFile>().selectedVertex)
             {
